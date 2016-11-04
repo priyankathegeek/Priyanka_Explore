@@ -1,0 +1,2 @@
+g++-4.9 -std=c++11  -c MultiThreadPractice6.cpp -O2 -larmadillo
+g++-4.9 -std=c++11  -o mt3 MultiThreadPractice6.o
