@@ -23,7 +23,7 @@ using namespace arma;
 
 #define NUM_ROWS 10000
 
-#define SUB_MAT_ROWS 1 
+#define SUB_MAT_ROWS 5 
 
 std::thread tds[NUM_THREADS];
 
@@ -36,6 +36,7 @@ int numOfTimes = 1;
 int extractStartRow =0; 
 int extractEndRow = 0;
 int mainMatrixFilled =0;
+int matrixRow =0;
 
 class LogFile {
 
@@ -77,9 +78,9 @@ public:
 {
 
 
-while(true)
+while(matrixRow>0) 
 {
-
+matrixRow--;
 std::this_thread::sleep_for(std::chrono::milliseconds(100000));
 cout << "INFO::Filling the sub matrixs::\n " << endl; 
 
@@ -91,9 +92,9 @@ extractStartRow = extractEndRow - SUB_MAT_ROWS;
 {
   std::lock_guard<std::mutex> locker(m_mutex);
   if (threadId=0)
-  subBuf1.shed_rows(0,SUB_MAT_ROWS);
+  subBuf1.shed_rows(0,SUB_MAT_ROWS-1);
   else
-  subBuf2.shed_rows(0,SUB_MAT_ROWS);
+  subBuf2.shed_rows(0,SUB_MAT_ROWS-1);
 
   cout << "INFO:: AFTER Deleted the existing SUBBUFFER1 data :: \n" << subBuf1[10] << endl;
   cout << "INFO:: AFTER Deleted the existing SUBBUFFER2 data :: \n" << subBuf2[10] << endl;
@@ -107,8 +108,8 @@ subBuf1 = mainBuffer(span(extractStartRow,extractEndRow), span(0,134) );
 else
 subBuf2 = mainBuffer(span(extractStartRow,extractEndRow), span(0,134) );
 
-cout << "INFO:: SUBbUFFER1 data is :: \n " << subBuf1[10] << endl;
-cout << "INFO:: SubBuffer2 data is :: \n " << subBuf2[10] << endl;
+//cout << "INFO:: SUBbUFFER1 data is :: \n " << subBuf1[10] << endl;
+//cout << "INFO:: SubBuffer2 data is :: \n " << subBuf2[10] << endl;
 
 
   ++numOfTimes;
@@ -205,12 +206,12 @@ int main(int argc, char* argv[]) {
 		std::cout << "num channels " << num_channels << std::endl;
 		cout << "Now pulling samples..." << endl;
 
-                int matrixRow =0;
+            //    int matrixRow =0;
 	
 
 	       int spawnChild = 1;
 
-               while (true) {
+               while (matrixRow <= 100) {
                         
                          cout << "Creating the matrix for row:: " << matrixRow << endl; 
                          //incrementing the matrix row for each and every loop.
@@ -222,6 +223,7 @@ int main(int argc, char* argv[]) {
 			for (unsigned c=0;c<num_channels;c++){
 				//cout << sample[c];
                                //writing to master matrix from the setMasterMatrix function
+
                                log.fillMainBuffer(matrixRow,c,sample[c]);
                                //B(matrixRow,c) = sample[c];
 				//if(c!=(num_channels-1))
@@ -229,7 +231,7 @@ int main(int argc, char* argv[]) {
 			}
 		      // cout << B(matrixRow,span(0,134)) << endl;
 
-                           if (spawnChild = 1 && matrixRow >50)
+                        /*   if (spawnChild = 1 && matrixRow >50)
                          {
                             spawnChild =0;
                             for (int j=0; j<NUM_THREADS; j++)
@@ -250,7 +252,7 @@ int main(int argc, char* argv[]) {
                                tds[t].join();
 
                             }
-                        }
+                        } */
 
 
 		}
@@ -258,12 +260,12 @@ int main(int argc, char* argv[]) {
 
 
 
-/*                for (int j=0; j<NUM_THREADS; j++)
+                for (int j=0; j<NUM_THREADS; j++)
 
                  {  
 
                   //Creating multiple threads, and each thread is calling function_1 and passing two values as reference log file class object and //number of rows.
-                   ts[j] = std::thread(function_1, std::ref(log),std::ref(j) );               
+                   tds[j] = std::thread(function_1, std::ref(log),std::ref(j) );               
 
                  } 
 
@@ -273,9 +275,9 @@ int main(int argc, char* argv[]) {
 
                   {  
 
-                   ts[t].join();
+                   tds[t].join();
 
-                  } */
+                  } 
 
 	} catch(std::exception &e) {
 		cerr << "Got an exception: " << e.what() << endl;
