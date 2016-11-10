@@ -19,11 +19,11 @@
 using namespace std;
 using namespace arma;
 
-#define NUM_THREADS  2
+#define NUM_THREADS  1
 
-#define NUM_ROWS 10000
+#define NUM_ROWS 15
 
-#define SUB_MAT_ROWS 5 
+#define SUB_MAT_ROWS 1 
 
 std::thread tds[NUM_THREADS];
 
@@ -38,6 +38,8 @@ int extractEndRow = 0;
 int mainMatrixFilled =0;
 int matrixRow =0;
 
+mat mainBuffer = zeros<mat>(NUM_ROWS,135);
+
 class LogFile {
 
 //adding mutex for matrix and file stream f
@@ -45,7 +47,7 @@ class LogFile {
     std::mutex m_mutex;
    // std::lock_guard<std::mutex> locker(m_mutex);
 
-    mat mainBuffer = zeros<mat>(NUM_ROWS,135); 
+//    mat mainBuffer = zeros<mat>(NUM_ROWS,135); 
      //below two sub buffers has to be dynamically defined based on the number of threads.   
         mat subBuf1 = zeros<mat>(SUB_MAT_ROWS,135);
         mat subBuf2 = zeros<mat>(SUB_MAT_ROWS,135);
@@ -69,7 +71,7 @@ public:
 
    mainBuffer(row,col) = val;
    mainMatrixFilled++;
-
+//   cout << "\n INFO:: Mainbuffer filled data is:: " << mainBuffer << endl;
 
     }
 
@@ -77,15 +79,18 @@ public:
    void fillSubMatrix(int threadId)
 {
 
-
+cout << "\n INFO:: Mainbuffer filled data is:: " << mainBuffer << endl;
 while(matrixRow>0) 
 {
 matrixRow--;
-std::this_thread::sleep_for(std::chrono::milliseconds(100000));
+std::this_thread::sleep_for(std::chrono::milliseconds(60));
 cout << "INFO::Filling the sub matrixs::\n " << endl; 
 
 extractEndRow = numOfTimes * SUB_MAT_ROWS;
 extractStartRow = extractEndRow - SUB_MAT_ROWS;
+
+cout << "\n Info::extractEndRow: " << extractEndRow << endl;
+cout << "\n Info::extractStartRow::" << extractStartRow << endl;
 
 //clearing the matrix after 5 mins or before filling next new chunk of data to the sub buffers.
  if (numOfTimes > 1 && mainMatrixFilled >0) 
@@ -96,8 +101,8 @@ extractStartRow = extractEndRow - SUB_MAT_ROWS;
   else
   subBuf2.shed_rows(0,SUB_MAT_ROWS-1);
 
-  cout << "INFO:: AFTER Deleted the existing SUBBUFFER1 data :: \n" << subBuf1[10] << endl;
-  cout << "INFO:: AFTER Deleted the existing SUBBUFFER2 data :: \n" << subBuf2[10] << endl;
+ // cout << "INFO:: AFTER Deleted the existing SUBBUFFER1 data :: \n" << subBuf1[0] << endl;
+  //cout << "INFO:: AFTER Deleted the existing SUBBUFFER2 data :: \n" << subBuf2[10] << endl;
 
 } 
 
@@ -108,8 +113,8 @@ subBuf1 = mainBuffer(span(extractStartRow,extractEndRow), span(0,134) );
 else
 subBuf2 = mainBuffer(span(extractStartRow,extractEndRow), span(0,134) );
 
-//cout << "INFO:: SUBbUFFER1 data is :: \n " << subBuf1[10] << endl;
-//cout << "INFO:: SubBuffer2 data is :: \n " << subBuf2[10] << endl;
+//cout << "INFO:: SUBbUFFER1 data is :: \n " << subBuf1 << endl;
+cout << "INFO:: SubBuffer2 data is :: \n " << subBuf2 << endl;
 
 
   ++numOfTimes;
@@ -153,7 +158,7 @@ void function_1(LogFile& log, int &n ) {
  log.fillSubMatrix(n);
 //making the thread sleep for 10000 milli seconds.
 
-     //std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+     //std::this_thread::sleep_for(std::chrono::milliseconds(6666660));
 
 }
 
@@ -211,7 +216,7 @@ int main(int argc, char* argv[]) {
 
 	       int spawnChild = 1;
 
-               while (matrixRow <= 100) {
+               while (matrixRow <= 12) {
                         
                          cout << "Creating the matrix for row:: " << matrixRow << endl; 
                          //incrementing the matrix row for each and every loop.
@@ -225,39 +230,18 @@ int main(int argc, char* argv[]) {
                                //writing to master matrix from the setMasterMatrix function
 
                                log.fillMainBuffer(matrixRow,c,sample[c]);
+                               cout << "\n Row::" << matrixRow << " Column :" << c << " Value::" << sample[c] << endl;
                                //B(matrixRow,c) = sample[c];
 				//if(c!=(num_channels-1))
 					//cout  << B(matrixRow ;
 			}
 		      // cout << B(matrixRow,span(0,134)) << endl;
 
-                        /*   if (spawnChild = 1 && matrixRow >50)
-                         {
-                            spawnChild =0;
-                            for (int j=0; j<NUM_THREADS; j++)
-
-                             {
-
-                             //Creating multiple threads, and each thread is calling function_1 and passing two values as reference log file class object and //number of rows.
-                             tds[j] = std::thread(function_1, std::ref(log),std::ref(j) );
-
-                             }   
-
-                            //Joining all the threads back.
-
-                           for ( int t=0; t<NUM_THREADS; t++)
-
-                            {    
-
-                               tds[t].join();
-
-                            }
-                        } */
 
 
 		}
 
-
+               cout << "\n INFO:: Mainbuffer filled data is:: " << mainBuffer << endl;
 
 
                 for (int j=0; j<NUM_THREADS; j++)
